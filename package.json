@@ -1,0 +1,18 @@
+{
+  "name": "nasa-project",
+  "version": "1.0.0",
+  "description": "This project is based on this another project https://github.com/odziem/nasa-project from Zero To Mastery - Complete NodeJS Developer in 2023 (GraphQL, MongoDB, + more)",
+  "main": "index.js",
+  "scripts": {
+    "install-server": "npm install --prefix server",
+    "install-client": "npm install --prefix client",
+    "install": "npm run install-server && npm run install-client",
+    "server": "npm run watch --prefix server",
+    "client": "npm start --prefix client",
+    "watch": "npm run server & npm run client",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
