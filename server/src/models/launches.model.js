@@ -1,28 +1,29 @@
 const launchesDatabase = require("./launches.mongo");
+const planets = require("./planets.mongo");
 
 const launches = new Map();
 
-let latestFlightNumber = 100;
+const DEFAULT_FLIGHT_NUMBER = 100;
 
-const launch = {
-    flightNumber: 100,
-    mission: "Kepler Exploration X",
-    rocket: "Explorer IS1",
-    launchDate: new Date("December 27, 2030"),
-    target: "Kepler-442 b",
-    customers: ["ZTM", "NASA"],
-    upcoming: true,
-    success: true,
-};
-
-launches.set(launch.flightNumber, launch);
-
-function getAllLaunches() {
-    return Array.from(launches.values());
+async function getAllLaunches() {
+    const dbLaunches = await launchesDatabase.find(
+        {},
+        {
+            _is: 0,
+            __v: 0,
+        }
+    );
+    return dbLaunches;
 }
 
 async function saveLaunch(launch) {
     try {
+        const planet = await planets.findOne({ keplerName: launch.target });
+
+        if (!planet) {
+            throw new Error('No matching planets found');
+        }
+
         await launchesDatabase.updateOne(
             {
                 flightNumber: launch.flightNumber,
@@ -30,13 +31,13 @@ async function saveLaunch(launch) {
             launch,
             { upsert: true }
         );
-    } catch(err) {
-        console.log('Fail to save launch: ', err);
+    } catch (err) {
+        console.log("Fail to save launch: ", err);
     }
 }
 
-function addNewLaunch(launch) {
-    latestFlightNumber++;
+async function addNewLaunch(launch) {
+    const latestFlightNumber = await getLatestFlightNumber();
     const insertedLaunch = {
         ...launch,
         flightNumber: latestFlightNumber,
@@ -44,10 +45,16 @@ function addNewLaunch(launch) {
         upcoming: true,
         success: true,
     };
-    console.log('Creating new launch! ', insertedLaunch);
+    console.log("Creating new launch! ", insertedLaunch);
     saveLaunch(insertedLaunch);
-    // launches.set(latestFlightNumber, insertedLaunch);
+
     return insertedLaunch;
+}
+
+async function getLatestFlightNumber() {
+    const latestLaunch = await launchesDatabase.findOne().sort('-flightNumber');
+
+    return latestLaunch?.flightNumber + 1 || DEFAULT_FLIGHT_NUMBER; 
 }
 
 function existsLaunchWithId(id) {
